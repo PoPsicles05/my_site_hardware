@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adafruit IO Webhook Data Visualization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .output {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 50%;
+            margin-left: auto;
+            margin-right: auto;
+            background-color: #f9f9f9;
+        }
+        canvas {
+            margin-top: 30px;
+            width: 80%;
+            max-width: 600px;
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Adafruit IO Webhook Data Visualization</h1>
+    <p>Data from Adafruit IO Webhook will be displayed here:</p>
+    <div class="output" id="dataOutput">Loading...</div>
+    <button onclick="fetchAndVisualizeData()">Fetch and Visualize Data</button>
+
+    <canvas id="dataChart"></canvas>
+
+    <script>
+        // Fetch data from the Netlify function that calls the Adafruit IO webhook
+        async function fetchAndVisualizeData() {
+            const functionUrl = '/.netlify/functions/fetchData';  // Netlify function URL
+
+            try {
+                const response = await fetch(functionUrl);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const result = await response.json();
+                const rawData = result.data;
+                document.getElementById('dataOutput').textContent = rawData;
+
+                // Optionally, parse the rawData if needed (e.g., for visualization purposes)
+                const parsedData = parseData(rawData);
+                visualizeData(parsedData);
+            } catch (error) {
+                document.getElementById('dataOutput').textContent = `Error fetching data: ${error.message}`;
+            }
+        }
+
+        // Parse the raw data (depending on the data format returned by the Netlify function)
+        function parseData(rawData) {
+            // For demonstration, let's assume rawData is a string or simple JSON object
+            try {
+                const data = JSON.parse(rawData);  // If it's a JSON string
+                return {
+                    labels: Object.keys(data),  // Sample assumption
+                    values: Object.values(data) // Sample assumption
+                };
+            } catch (e) {
+                console.error('Error parsing data', e);
+                return { labels: [], values: [] };
+            }
+        }
+
+        // Visualize the data using Chart.js
+        function visualizeData(parsedData) {
+            const ctx = document.getElementById('dataChart').getContext('2d');
+
+            // Create a chart using Chart.js
+            new Chart(ctx, {
+                type: 'bar',  // Bar chart type
+                data: {
+                    labels: parsedData.labels,  // Labels from parsed data
+                    datasets: [{
+                        label: 'Webhook Data',
+                        data: parsedData.values,  // Values from parsed data
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
